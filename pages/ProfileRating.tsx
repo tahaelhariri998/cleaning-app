@@ -184,8 +184,8 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
               <img src={"logo.png"} alt="Logo" className="w-60 h-39 mx-auto relative z-10" />
             </div>
             <User className="w-24 h-24 mx-auto text-white" />
-            <h1 className="text-white text-2xl font-bold">{name || 'John Doe'}</h1>
-            <p className="text-white opacity-90">{email || 'john.doe@example.com'}</p>
+            <h1 className="text-white text-2xl font-bold">{name}</h1>
+            <p className="text-white opacity-90">{email}</p>
           </div>
         </div>
         <div className="p-6 flex flex-col items-center justify-center">

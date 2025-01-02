@@ -74,7 +74,29 @@ const Profile = () => {
       
 
     } catch (error) {
-      setMessage(`Error updating user information: ${error}`);
+      try {
+        const response = await fetch("/api/user", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: session?.user?.email,
+            name: name,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to update user information", response);
+          throw new Error("Failed to update user information");
+        }
+
+        setMessage("User information updated successfully");
+        setIsEditing(false);
+        
+
+      } catch (error) {
+      setMessage(`Error updating user information: ${error}`);}
     }
   };
 
