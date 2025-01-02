@@ -70,8 +70,8 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
       const data = await response.json();
       setAllRatings(data);
-      setWeeklyRatings(data.filter((rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(new Date().getDate() - 7))));
-      setMonthlyRatings(data.filter((rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(1))));
+    setWeeklyRatings(data.filter((rating: Rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(new Date().getDate() - 7))));
+    setMonthlyRatings(data.filter((rating: Rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(1))));
       calculateRatings(data);
     } catch (error) {
       console.error('Error fetching ratings:', error);

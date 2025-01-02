@@ -11,7 +11,9 @@ interface ProfileRatingProps {
 
 interface Rating {
   rating: number;
-  timestamp: string;
+  createdAt: string;
+  customerNumber: string; // Add this property
+  email: string;
 }
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
