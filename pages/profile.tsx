@@ -74,6 +74,7 @@ const Profile = () => {
       
 
     } catch (error) {
+      console.error(`Error updating user information: ${error}`);
       try {
         const response = await fetch("/api/user", {
           method: "PUT",
@@ -93,7 +94,7 @@ const Profile = () => {
 
         setMessage("User information updated successfully");
         setIsEditing(false);
-        
+
 
       } catch (error) {
       setMessage(`Error updating user information: ${error}`);}
