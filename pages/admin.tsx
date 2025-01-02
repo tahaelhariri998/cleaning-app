@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Smile, ThumbsUp, Meh, Frown, ThumbsDown, User } from 'lucide-react';
+ 
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import './globals.css';
@@ -18,8 +18,7 @@ interface Rating {
 }
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
-  const [step, setStep] = useState('profile');
-  const [ratings, setRatings] = useState<Rating[]>([]);
+ console.log(name,email);
   const [allRatings, setAllRatings] = useState<Rating[]>([]);
   const [weeklyRatings, setWeeklyRatings] = useState<Rating[]>([]);
   const [monthlyRatings, setMonthlyRatings] = useState<Rating[]>([]);
@@ -28,6 +27,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
   const [weeklyRating, setWeeklyRating] = useState(0);
   const [monthlyRating, setMonthlyRating] = useState(0);
   const router = useRouter();
+  console.log(sumRating,weeklyRating,monthlyRating);
 
   const calculateRatings = (ratings: Rating[]) => {
     const now = new Date();
@@ -87,16 +87,6 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     router.push("/login");
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
 
   const renderTable = (ratingsData: Rating[]) => {
     const aggregatedRatings = Object.entries(

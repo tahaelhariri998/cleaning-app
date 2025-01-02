@@ -74,7 +74,7 @@ const Profile = () => {
       
 
     } catch (error) {
-      setMessage("Error updating user information");
+      setMessage(`Error updating user information: ${error}`);
     }
   };
 
