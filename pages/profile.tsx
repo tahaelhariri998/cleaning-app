@@ -29,7 +29,7 @@ const Profile = () => {
         setName(userName);
 
         const nameParts = userName.trim().split(" ");
-        if (nameParts.length < 2) {
+        if (nameParts.length < 2 || name==" " || name=="" || name==null) {
           setIsEditing(true);
           setMessage(
             "Please enter your full name (First and Last). You cannot proceed without updating."
