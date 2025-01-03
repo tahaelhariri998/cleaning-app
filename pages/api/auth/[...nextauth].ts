@@ -7,11 +7,7 @@ export default NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          redirect_uri: 'https://cleaning-app-sand.vercel.app/login', // Vercel redirect URI
-        }
-      }
+     
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
@@ -22,9 +18,7 @@ export default NextAuth({
         
         (session.user as { id: string }).id = token.id as string;
       }
-      if (token?.id) {
-        (session.user as { id: string }).id = token.id as string;
-      }
+     
       return session;
     },
   },
