@@ -9,7 +9,7 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          redirect_uri: 'https://cleaning-app-sand.vercel.app/api/auth/callback/google', // Vercel redirect URI
+          redirect_uri: 'https://cleaning-app-sand.vercel.app', // Vercel redirect URI
         }
       }
     }),
