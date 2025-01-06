@@ -16,6 +16,7 @@ interface Rating {
 }
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
+  console.log(name, email); 
   const [allRatings, setAllRatings] = useState<Rating[]>([]);
   const [selectedDayRatings, setSelectedDayRatings] = useState<Rating[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
