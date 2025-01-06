@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
- 
-import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import './globals.css';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface ProfileRatingProps {
   name: string;
@@ -18,99 +16,113 @@ interface Rating {
 }
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
- console.log(name,email);
   const [allRatings, setAllRatings] = useState<Rating[]>([]);
-  const [weeklyRatings, setWeeklyRatings] = useState<Rating[]>([]);
-  const [monthlyRatings, setMonthlyRatings] = useState<Rating[]>([]);
-  const [activeTab, setActiveTab] = useState('all-time');
-  const [sumRating, setSumRating] = useState(0);
-  const [weeklyRating, setWeeklyRating] = useState(0);
-  const [monthlyRating, setMonthlyRating] = useState(0);
-  const router = useRouter();
-  console.log(sumRating,weeklyRating,monthlyRating);
+  const [selectedDayRatings, setSelectedDayRatings] = useState<Rating[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Rating[] | null>(null);
+  const [activeTab, setActiveTab] = useState('all-time'); // Default tab is 'all-time'
 
-  const calculateRatings = (ratings: Rating[]) => {
-    const now = new Date();
-
-    const lastSaturday = new Date(now);
-    lastSaturday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
-    lastSaturday.setHours(0, 0, 0, 0);
-
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    firstDayOfMonth.setHours(0, 0, 0, 0);
-
-    const aggregateRatings = (ratings: Rating[]) => {
-      const userRatings: { [key: string]: number } = {};
-      ratings.forEach((rating) => {
-        const userKey = rating.email;
-        if (userRatings[userKey]) {
-          userRatings[userKey] += rating.rating;
-        } else {
-          userRatings[userKey] = rating.rating;
-        }
-      });
-      return userRatings;
-    };
-
-    const weeklySum = ratings.filter(rating => new Date(rating.createdAt) >= lastSaturday);
-    const monthlySum = ratings.filter(rating => new Date(rating.createdAt) >= firstDayOfMonth);
-
-    setWeeklyRating(Object.values(aggregateRatings(weeklySum)).reduce((acc, curr) => acc + curr, 0));
-    setMonthlyRating(Object.values(aggregateRatings(monthlySum)).reduce((acc, curr) => acc + curr, 0));
-    setSumRating(Object.values(aggregateRatings(ratings)).reduce((acc, curr) => acc + curr, 0));
-  };
-
+  // Fetch all ratings from the API
   const fetchRatings = async () => {
     try {
       const response = await fetch('/api/rating', { method: 'GET' });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch ratings');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch ratings');
       const data = await response.json();
       setAllRatings(data);
-    setWeeklyRatings(data.filter((rating: Rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(new Date().getDate() - 7))));
-    setMonthlyRatings(data.filter((rating: Rating) => new Date(rating.createdAt) >= new Date(new Date().setDate(1))));
-      calculateRatings(data);
     } catch (error) {
       console.error('Error fetching ratings:', error);
     }
   };
 
-  useEffect(() => {
-    fetchRatings();
-  }, []);
+  // Filter ratings by selected date
+  const filterRatingsByDate = (date: Date | null) => {
+    if (!date) return;
+    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/login");
+    const filteredRatings = allRatings.filter((rating) => {
+      const createdAt = new Date(rating.createdAt);
+      return createdAt >= startOfDay && createdAt <= endOfDay;
+    });
+
+    setSelectedDayRatings(filteredRatings);
   };
 
+  // Filter ratings for the last week
+  const filterWeeklyRatings = () => {
+    const now = new Date();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(now.getDate() - 7);
 
+    return allRatings.filter((rating) => {
+      const createdAt = new Date(rating.createdAt);
+      return createdAt >= oneWeekAgo && createdAt <= now;
+    });
+  };
+
+  // Filter ratings for the last month
+  const filterMonthlyRatings = () => {
+    const now = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+
+    return allRatings.filter((rating) => {
+      const createdAt = new Date(rating.createdAt);
+      return createdAt >= oneMonthAgo && createdAt <= now;
+    });
+  };
+
+  useEffect(() => {
+    fetchRatings(); // Fetch ratings when the component mounts
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) filterRatingsByDate(selectedDate); // Apply date filter if a date is selected
+  }, [selectedDate]);
+
+  // Handle click on user name to show their specific ratings
+  const handleUserClick = (email: string) => {
+    const userRatings = allRatings.filter((rating) => rating.email === email);
+    setSelectedUser(userRatings); // Set the ratings of the selected user
+  };
+
+  // Render the ratings table
   const renderTable = (ratingsData: Rating[]) => {
     const aggregatedRatings = Object.entries(
-      ratingsData.reduce((acc: { [key: string]: { name: string; rating: number } }, rating) => {
+      ratingsData.reduce((acc: { [key: string]: { name: string; rating: number; customerNumber: string } }, rating) => {
         const userKey = rating.email;
         if (acc[userKey]) {
           acc[userKey].rating += rating.rating;
         } else {
-          acc[userKey] = { name: rating.name, rating: rating.rating };
+          acc[userKey] = { name: rating.name, rating: rating.rating, customerNumber: rating.customerNumber };
         }
         return acc;
-      }, {})
+      }, {} as { [key: string]: { name: string; rating: number; customerNumber: string } })
     );
 
     return aggregatedRatings
-      .sort((a, b) => b[1].rating - a[1].rating)
-      .map(([userEmail, { name, rating }], index) => (
-        <tr key={userEmail} className={`bg-white hover:bg-gray-100 ${index < 3 ? 'bg-yellow-100' : ''}`}>
-          <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
-          <td className="px-4 py-2 border-b text-gray-800">{name}</td>
-      
-          <td className="px-4 py-2 border-b text-gray-800">{rating}</td>
-        </tr>
-      ));
+      .sort((a, b) => b[1].rating - a[1].rating) // Sort by total rating in descending order
+      .map(([userEmail, { name, rating }], index) => {
+        let medalEmoji = '';
+        if (index === 0) medalEmoji = '🥇';
+        else if (index === 1) medalEmoji = '🥈';
+        else if (index === 2) medalEmoji = '🥉';
+
+        return (
+          <tr
+            key={userEmail}
+            className={`bg-white hover:bg-gray-100 ${index < 3 ? 'bg-yellow-100' : ''}`}
+            onClick={() => handleUserClick(userEmail)} // Add click handler
+          >
+            <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
+            <td className="px-4 py-2 border-b text-gray-800 flex items-center">
+              {name} {medalEmoji && <span className="ml-2">{medalEmoji}</span>}
+            </td>
+            <td className="px-4 py-2 border-b text-gray-800">{rating}</td>
+            
+          </tr>
+        );
+      });
   };
 
   return (
@@ -118,17 +130,36 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
       <div className="bg-gradient-to-r from-purple-900 to-purple-700 p-8">
         <div className="max-w-full mx-auto text-center">
           <h1 className="text-white text-2xl font-bold mb-4">Admin Dashboard</h1>
-          <div className="flex justify-center space-x-4 mb-6">
-            <button onClick={() => setActiveTab('all-time')} className={`px-6 py-2 rounded-lg ${activeTab === 'all-time' ? 'bg-purple-700 text-gray' : 'bg-gray-200 text-black'}`}>
-              All Time Ratings
-            </button>
-            <button onClick={() => setActiveTab('weekly')} className={`px-6 py-2 rounded-lg ${activeTab === 'weekly' ? 'bg-purple-700 text-gray' : 'bg-gray-200 text-black'}`}>
-              Weekly Ratings
-            </button>
-            <button onClick={() => setActiveTab('monthly')} className={`px-6 py-2 rounded-lg ${activeTab === 'monthly' ? 'bg-purple-700 text-gray' : 'bg-gray-200 text-black'}`}>
-              Monthly Ratings
-            </button>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setActiveTab('all-time')}
+                className={`px-6 py-2 rounded-lg ${activeTab === 'all-time' ? 'bg-purple-700 text-white' : 'bg-gray-200 text-black'}`}
+              >
+                All Time Ratings
+              </button>
+              <button
+                onClick={() => setActiveTab('weekly')}
+                className={`px-6 py-2 rounded-lg ${activeTab === 'weekly' ? 'bg-purple-700 text-white' : 'bg-gray-200 text-black'}`}
+              >
+                Weekly Ratings
+              </button>
+              <button
+                onClick={() => setActiveTab('monthly')}
+                className={`px-6 py-2 rounded-lg ${activeTab === 'monthly' ? 'bg-purple-700 text-white' : 'bg-gray-200 text-black'}`}
+              >
+                Monthly Ratings
+              </button>
+              <button
+                onClick={() => setActiveTab('select-day')}
+                className={`px-6 py-2 rounded-lg ${activeTab === 'select-day' ? 'bg-purple-700 text-white' : 'bg-gray-200 text-black'}`}
+              >
+                Select Day Ratings
+              </button>
+            </div>
           </div>
+
+          {/* All Time Ratings */}
           {activeTab === 'all-time' && (
             <div className="overflow-x-auto p-4">
               <table className="min-w-full table-auto border-collapse table-layout-fixed">
@@ -136,14 +167,16 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                   <tr className="bg-gray-200 text-left">
                     <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
                     <th className="px-4 py-2 border-b text-purple-700 w-1/4">Name</th>
-     
                     <th className="px-4 py-2 border-b text-purple-700 w-1/6">Total Rating</th>
+                   
                   </tr>
                 </thead>
                 <tbody>{renderTable(allRatings)}</tbody>
               </table>
             </div>
           )}
+
+          {/* Weekly Ratings */}
           {activeTab === 'weekly' && (
             <div className="overflow-x-auto p-4">
               <table className="min-w-full table-auto border-collapse table-layout-fixed">
@@ -151,14 +184,16 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                   <tr className="bg-gray-200 text-left">
                     <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
                     <th className="px-4 py-2 border-b text-purple-700 w-1/4">Name</th>
-                
                     <th className="px-4 py-2 border-b text-purple-700 w-1/6">Total Rating</th>
+                 
                   </tr>
                 </thead>
-                <tbody>{renderTable(weeklyRatings)}</tbody>
+                <tbody>{renderTable(filterWeeklyRatings())}</tbody>
               </table>
             </div>
           )}
+
+          {/* Monthly Ratings */}
           {activeTab === 'monthly' && (
             <div className="overflow-x-auto p-4">
               <table className="min-w-full table-auto border-collapse table-layout-fixed">
@@ -166,23 +201,75 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                   <tr className="bg-gray-200 text-left">
                     <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
                     <th className="px-4 py-2 border-b text-purple-700 w-1/4">Name</th>
-                  
                     <th className="px-4 py-2 border-b text-purple-700 w-1/6">Total Rating</th>
+                   
                   </tr>
                 </thead>
-                <tbody>{renderTable(monthlyRatings)}</tbody>
+                <tbody>{renderTable(filterMonthlyRatings())}</tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Select Day Ratings */}
+          {activeTab === 'select-day' && (
+            <div className="p-4 text-center">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                className="border rounded-lg px-4 py-2"
+                placeholderText="Select a date"
+              />
+              {selectedDate && (
+                <div className="overflow-x-auto p-4 mt-4">
+                  <table className="min-w-full table-auto border-collapse table-layout-fixed">
+                    <thead>
+                      <tr className="bg-gray-200 text-left">
+                        <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
+                        <th className="px-4 py-2 border-b text-purple-700 w-1/4">Name</th>
+                        <th className="px-4 py-2 border-b text-purple-700 w-1/6">Total Rating</th>
+                      
+                      </tr>
+                    </thead>
+                    <tbody>{renderTable(selectedDayRatings)}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* User Specific Ratings */}
+          {selectedUser && (
+            <div className="overflow-x-auto p-4 mt-6">
+              <h2 className="text-xl font-semibold mb-4">Ratings for {selectedUser[0].name}</h2>
+              <table className="min-w-full table-auto border-collapse table-layout-fixed">
+                <thead>
+                  <tr className="bg-gray-200 text-left">
+                    <th className="px-4 py-2 border-b text-purple-700">Rating</th>
+                    <th className="px-4 py-2 border-b text-purple-700">Customer Number</th> {/* Added customer number column */}
+                    <th className="px-4 py-2 border-b text-purple-700">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedUser.map((rating, index) => (
+                    <tr key={index} className="bg-white hover:bg-gray-100">
+                      <td className="px-4 py-2 border-b text-gray-800">{rating.rating}</td>
+                      <td className="px-4 py-2 border-b text-gray-800">{rating.customerNumber}</td> {/* Added customer number */}
+                      <td className="px-4 py-2 border-b text-gray-800">{new Date(rating.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
-      <div className="p-6 text-center">
-        <button
-          onClick={handleSignOut}
-          className="bg-red-500 text-white px-6 py-3 rounded-2xl shadow-lg hover:bg-red-600 transition duration-300"
-        >
-          Sign Out
-        </button>
+        <div className="flex justify-center items-center ">
+  <button
+    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+    onClick={() => alert('Signing out...')}
+  >
+    Sign Out
+  </button>
+</div>
       </div>
     </div>
   );

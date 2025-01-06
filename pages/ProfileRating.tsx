@@ -162,7 +162,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
   if (isRated) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-purple-900 to-purple-700 p-4">
+        <div className="bg-gradient-to-r from-green-300 to-green-600 p-4">
           <h1 className="text-white text-2xl font-bold text-center">Thank You</h1>
         </div>
         <div className="flex items-center justify-center min-h-[80vh]">
@@ -178,10 +178,10 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
   if (step === 'profile') {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-gradient-to-r from-purple-900 to-purple-700 p-8">
+        <div className="bg-gradient-to-r from-green-300 to-green-600 p-8">
           <div className="max-w-md mx-auto text-center">
             <div className="mb-4">
-              <img src={"logo.png"} alt="Logo" className="w-60 h-39 mx-auto relative z-10" />
+              <img src={"logo.png"} alt="Logo" className="w-60/4 h-39/4 mx-auto relative z-10" />
             </div>
             <User className="w-24 h-24 mx-auto text-white" />
             <h1 className="text-white text-2xl font-bold">{name}</h1>
@@ -268,28 +268,31 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-purple-900 to-purple-700 p-4">
-        <div className="mb-4">
-          <img src={"logo.png"} alt="Logo" className="w-60 h-39 mx-auto" />
-        </div>
-        <h1 className="text-white text-2xl font-bold text-center">Rate Our Service</h1>
-      </div>
-      <div className="p-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-8">How was our service today?</h2>
-        <div className="flex flex-col space-y-4 max-w-xs mx-auto">
-          {emojis.map((emoji) => (
-            <button
-              key={emoji.value}
-              onClick={() => handleRatingSubmit(emoji.value)}
-              className="flex items-center space-x-4 space-x-reverse p-4 rounded-2xl bg-white shadow-md hover:shadow-lg transition-shadow hover:bg-gray-50 active:scale-95 transition-transform"
-            >
-              <emoji.icon className={`w-12 h-12 ${emoji.color}`} />
-              <span className="text-xl text-gray-700 flex-grow text-right">{emoji.text}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+  <div className="bg-gradient-to-r from-green-300 to-green-600 p-4 relative">
+    {/* Logo positioned in the top-left corner */}
+    <div className="absolute top-1 left-4">
+      <img src="logo.png" alt="Logo" className="w-20 h-18" />
     </div>
+    {/* Title centered below */}
+    <h1 className="text-white text-2xl font-bold text-center">Rate Our Service</h1>
+  </div>
+  <div className="p-6 text-center">
+    <h2 className="text-2xl font-bold text-gray-800 mb-8">How was our service today?</h2>
+    <div className="flex flex-col space-y-4 max-w-xs mx-auto">
+      {emojis.map((emoji) => (
+        <button
+          key={emoji.value}
+          onClick={() => handleRatingSubmit(emoji.value)}
+          className="flex items-center space-x-4 space-x-reverse p-4 rounded-2xl bg-white shadow-md hover:shadow-lg transition-shadow hover:bg-gray-50 active:scale-95 transition-transform"
+        >
+          <emoji.icon className={`w-12 h-12 ${emoji.color}`} />
+          <span className="text-xl text-gray-700 flex-grow text-right">{emoji.text}</span>
+        </button>
+      ))}
+    </div>
+  </div>
+</div>
+
   );
 };
 
