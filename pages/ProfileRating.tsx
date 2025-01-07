@@ -41,6 +41,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
 
   useEffect(() => {
+    console.log(oflineRate);
     setIsOnline(navigator.onLine);
     const handleOnline = () => {
       setIsOnline(true);
