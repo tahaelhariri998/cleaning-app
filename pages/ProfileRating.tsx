@@ -92,14 +92,16 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(rating),
         });
+        
       } catch (error) {
         console.error('Error syncing rating:', error);
         return;
       }
     }
-
     localStorage.setItem('offlineRatings', JSON.stringify([]));
-    fetchRatings();
+
+    
+    
   };
 
   const calculateRatings = (ratings: Rating[]) => {
@@ -140,6 +142,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
   const fetchRatings = async () => {
     try {
+      syncOfflineRatings();
       const response = await fetch(`/api/rating?email=${email}`);
       if (!response.ok) throw new Error('Failed to fetch ratings');
       
@@ -324,7 +327,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
       </div>
     );
   }
-  syncOfflineRatings();
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {!isOnline && (
