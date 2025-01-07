@@ -45,7 +45,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     setIsOnline(navigator.onLine);
     const handleOnline = () => {
       setIsOnline(true);
-      syncOfflineRatings();
+    
     };
     const handleOffline = () => setIsOnline(false);
 
@@ -142,7 +142,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
   const fetchRatings = async () => {
     try {
-      
+      syncOfflineRatings();
       const response = await fetch(`/api/rating?email=${email}`);
       if (!response.ok) throw new Error('Failed to fetch ratings');
       
