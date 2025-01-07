@@ -324,7 +324,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
       </div>
     );
   }
-
+  syncOfflineRatings();
   return (
     <div className="min-h-screen bg-gray-50">
       {!isOnline && (
