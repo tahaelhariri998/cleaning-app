@@ -145,7 +145,7 @@ const Profile = () => {
     
   }
 
-if (session.user?.email === "nextgraft@gmail.com") {
+if (session.user?.email === "almashhadalneeq@gmail.com") {
   return (
     <div>
       
