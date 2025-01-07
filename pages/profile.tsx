@@ -106,7 +106,7 @@ const Profile = () => {
   }
 
   if (!session) {
-    return router.push("/login");
+    return router.push("/");
   }
 
   if (isEditing) {

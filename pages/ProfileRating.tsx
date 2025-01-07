@@ -27,7 +27,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
   const [weeklyRating, setWeeklyRating] = useState(0);
   const [monthlyRating, setMonthlyRating] = useState(0);
   const [isOnline, setIsOnline] = useState(true);
-  
+  const [oflineRate, setOflineRate] = useState(false);
   const router = useRouter();
 
   const emojis = [
@@ -37,6 +37,8 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     { icon: Frown, text: "Poor - سيء", color: "text-orange-500", value: -1 },
     { icon: ThumbsDown, text: "Very Poor - سيء جداً", color: "text-red-500", value: -2 }
   ];
+
+
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -48,6 +50,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
 
     loadLocalRatings();
     if (navigator.onLine) {
@@ -160,6 +163,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
       saveRatingLocally(newRating);
       setRatings(prev => [...prev, newRating]);
       calculateRatings([...ratings, newRating]);
+      setOflineRate(true);
     } else {
       try {
         const response = await fetch('/api/rating', {
@@ -201,7 +205,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/login");
+    router.push("/");
   };
 
   if (isRated) {
@@ -304,15 +308,18 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
             </div>
           </div>
         </div>
-
-        <div className="flex justify-center mt-6 mb-8">
+   
+        <div className="flex justify-center mt-6  ">
           <button
             onClick={handleSignOut}
             className="bg-red-500 text-white px-6 py-3 rounded-2xl shadow-lg hover:bg-red-600 transition-all focus:outline-none"
           >
             Sign Out
           </button>
+        
+
         </div>
+        <div className="flex justify-center mt-6  "> </div>
       </div>
     );
   }
