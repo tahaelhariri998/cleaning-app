@@ -1,1 +1,99 @@
-if(!self.define){let e,s={};const n=(n,i)=>(n=new URL(n+".js",i).href,s[n]||new Promise((s=>{if("document"in self){const e=document.createElement("script");e.src=n,e.onload=s,document.head.appendChild(e)}else e=n,importScripts(n),s()})).then((()=>{let e=s[n];if(!e)throw new Error(`Module ${n} didn’t register its module`);return e})));self.define=(i,t)=>{const a=e||("document"in self?document.currentScript.src:"")||location.href;if(s[a])return;let c={};const r=e=>n(e,a),o={module:{uri:a},exports:c,require:r};s[a]=Promise.all(i.map((e=>o[e]||r(e)))).then((e=>(t(...e),c)))}}define(["./workbox-07672ec7"],(function(e){"use strict";importScripts(),self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"/_next/app-build-manifest.json",revision:"434af078512000203212119bf342c673"},{url:"/_next/dynamic-css-manifest.json",revision:"d751713988987e9331980363e24189ce"},{url:"/_next/static/chunks/120-a2ce819f49f29d6a.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/165-11c63959671209dd.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/203.215f7ebb412294c3.js",revision:"215f7ebb412294c3"},{url:"/_next/static/chunks/218.ee5bb437b51df9be.js",revision:"ee5bb437b51df9be"},{url:"/_next/static/chunks/26770aaf-596bc11a4207b8f3.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/350-7892a8e25bb2c971.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/4bd1b696-b58e8e3f58296fa4.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/863-173f79f77641c1c8.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/framework-1789f0885013f26e.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/main-app-0ddf09bb429264c4.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/main-f635dd5b079cb73e.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/ProfileRating-9f02ec5e471d77ea.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/_app-e7a24b364dec7438.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/_error-be09eb0819c09b75.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/admin-e8d4857b59540cc3.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/index-d60024d8310e9f68.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/pages/profile-65f1c7270e1c948c.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/chunks/polyfills-42372ed130431b0a.js",revision:"846118c33b2c0e922d7b3a7676f81f6f"},{url:"/_next/static/chunks/webpack-a3d31a16f9f256db.js",revision:"nQvuvhD5j0fi85Ryp8dUM"},{url:"/_next/static/css/0acef4df005bbe6c.css",revision:"0acef4df005bbe6c"},{url:"/_next/static/css/4379bba28f7affb8.css",revision:"4379bba28f7affb8"},{url:"/_next/static/nQvuvhD5j0fi85Ryp8dUM/_buildManifest.js",revision:"1395fd1776c2b32cdd6ee93752393dfd"},{url:"/_next/static/nQvuvhD5j0fi85Ryp8dUM/_ssgManifest.js",revision:"b6652df95db52feb4daf4eca35380933"},{url:"/file.svg",revision:"d09f95206c3fa0bb9bd9fefabfd0ea71"},{url:"/globe.svg",revision:"2aaafa6a49b6563925fe440891e32717"},{url:"/logo.png",revision:"1d77efe55fd0a5bac020c36cb6899e05"},{url:"/manifest.json",revision:"f7b374ada64c51aca8852cc57bd3acb3"},{url:"/next.svg",revision:"8e061864f388b47f33a1c3780831193e"},{url:"/service-worker.js",revision:"acc8b4cf5be0c0a5cc3010c4917fe1cc"},{url:"/vercel.svg",revision:"c0af2f507b369b085b35ef4bbe3bcf1e"},{url:"/window.svg",revision:"a2760511c65806022ad20adf74370ff3"}],{ignoreURLParametersMatching:[]}),e.cleanupOutdatedCaches(),e.registerRoute("/",new e.NetworkFirst({cacheName:"start-url",plugins:[{cacheWillUpdate:async({request:e,response:s,event:n,state:i})=>s&&"opaqueredirect"===s.type?new Response(s.body,{status:200,statusText:"OK",headers:s.headers}):s}]}),"GET"),e.registerRoute(/^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,new e.CacheFirst({cacheName:"google-fonts-webfonts",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:31536e3})]}),"GET"),e.registerRoute(/^https:\/\/fonts\.(?:googleapis)\.com\/.*/i,new e.StaleWhileRevalidate({cacheName:"google-fonts-stylesheets",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:604800})]}),"GET"),e.registerRoute(/\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,new e.StaleWhileRevalidate({cacheName:"static-font-assets",plugins:[new e.ExpirationPlugin({maxEntries:4,maxAgeSeconds:604800})]}),"GET"),e.registerRoute(/\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,new e.StaleWhileRevalidate({cacheName:"static-image-assets",plugins:[new e.ExpirationPlugin({maxEntries:64,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\/_next\/image\?url=.+$/i,new e.StaleWhileRevalidate({cacheName:"next-image",plugins:[new e.ExpirationPlugin({maxEntries:64,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:mp3|wav|ogg)$/i,new e.CacheFirst({cacheName:"static-audio-assets",plugins:[new e.RangeRequestsPlugin,new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:mp4)$/i,new e.CacheFirst({cacheName:"static-video-assets",plugins:[new e.RangeRequestsPlugin,new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:js)$/i,new e.StaleWhileRevalidate({cacheName:"static-js-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:css|less)$/i,new e.StaleWhileRevalidate({cacheName:"static-style-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\/_next\/data\/.+\/.+\.json$/i,new e.StaleWhileRevalidate({cacheName:"next-data",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute(/\.(?:json|xml|csv)$/i,new e.NetworkFirst({cacheName:"static-data-assets",plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute((({url:e})=>{if(!(self.origin===e.origin))return!1;const s=e.pathname;return!s.startsWith("/api/auth/")&&!!s.startsWith("/api/")}),new e.NetworkFirst({cacheName:"apis",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:16,maxAgeSeconds:86400})]}),"GET"),e.registerRoute((({url:e})=>{if(!(self.origin===e.origin))return!1;return!e.pathname.startsWith("/api/")}),new e.NetworkFirst({cacheName:"others",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:86400})]}),"GET"),e.registerRoute((({url:e})=>!(self.origin===e.origin)),new e.NetworkFirst({cacheName:"cross-origin",networkTimeoutSeconds:10,plugins:[new e.ExpirationPlugin({maxEntries:32,maxAgeSeconds:3600})]}),"GET")}));
+// public/sw.js
+// List of pages to cache immediately
+const PRECACHE_PAGES = [
+    '/',
+    '/profile'
+  ];
+  
+  // Cache name definitions
+  const CACHE_NAMES = {
+    pages: 'pages-cache-v1',
+    images: 'images-cache-v1',
+    static: 'static-cache-v1'
+  };
+  
+  self.addEventListener('install', (event) => {
+    event.waitUntil(
+      Promise.all([
+        // Cache critical pages immediately
+        caches.open(CACHE_NAMES.pages).then((cache) => {
+          return cache.addAll(PRECACHE_PAGES);
+        }),
+        // Cache the offline page
+        caches.open(CACHE_NAMES.pages).then((cache) => {
+          return cache.add('/profile');
+        })
+      ])
+    );
+  });
+  
+  self.addEventListener('activate', (event) => {
+    event.waitUntil(
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (!Object.values(CACHE_NAMES).includes(cacheName)) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    );
+  });
+  
+  self.addEventListener('fetch', (event) => {
+    // Skip cross-origin requests
+    if (!event.request.url.startsWith(self.location.origin)) {
+      return;
+    }
+  
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        if (response) {
+          // Return cached version
+          return response;
+        }
+  
+        return fetch(event.request).then((response) => {
+          // Don't cache non-successful responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+  
+          // Clone the response
+          const responseToCache = response.clone();
+  
+          // Determine cache storage based on request type
+          const cacheKey = event.request.url.includes('/_next/image') || 
+            event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/) 
+            ? CACHE_NAMES.images 
+            : event.request.url.match(/\.(js|css)$/) 
+              ? CACHE_NAMES.static 
+              : CACHE_NAMES.pages;
+  
+          caches.open(cacheKey).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+  
+          return response;
+        }).catch(() => {
+          // Return offline page if network request fails
+          if (event.request.mode === 'navigate') {
+            return caches.match('/profile');
+          }
+        });
+      })
+    );
+  });
+  
+  // Listen for page prefetch requests from the app
+  self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'PREFETCH_PAGES') {
+      event.waitUntil(
+        caches.open(CACHE_NAMES.pages).then((cache) => {
+          return cache.addAll(event.data.pages);
+        })
+      );
+    }
+  });
