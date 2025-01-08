@@ -24,7 +24,7 @@ const Home = () => {
           </div>
           {!isOnline && (
             <p className="text-yellow-300 text-sm">
-              You're offline. Using saved login data.
+              You are offline. Using saved login data.
             </p>
           )}
         </div>
