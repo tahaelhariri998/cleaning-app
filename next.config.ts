@@ -7,22 +7,34 @@ const withPWA = require('next-pwa')({
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: 'NetworkFirst', // Changed from StaleWhileRevalidate to NetworkFirst
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'https-calls',
         networkTimeoutSeconds: 15,
         expiration: {
           maxEntries: 150,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 1 month
+          maxAgeSeconds: 30 * 24 * 60 * 60
         },
         cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
+          statuses: [0, 200]
+        }
+      }
     },
-  ],
+    {
+      // Cache NextAuth.js session endpoint
+      urlPattern: /\/api\/auth\/session/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'auth-session',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 24 * 60 * 60 // 24 hours
+        }
+      }
+    }
+  ]
 })
 
 module.exports = withPWA({
-  reactStrictMode: false,
+  reactStrictMode: false
 })
