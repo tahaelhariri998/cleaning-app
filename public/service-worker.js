@@ -10,6 +10,9 @@ const urlsToCache = [
  " /globals.css",
  "/ProfileRating.tsx",
  "/_app.tsx",
+ "/index.tsx",
+    "/Profile.tsx",
+    "/ProfileRating",
 
 
 
