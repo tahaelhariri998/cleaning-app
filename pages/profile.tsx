@@ -107,9 +107,7 @@ const Profile = () => {
     return <div>Loading...</div>;
   }
 
-  if (!session) {
-    return router.push("/");
-  }
+ 
 
   if (isEditing) {
     return (
@@ -117,7 +115,7 @@ const Profile = () => {
         <div className="bg-gradient-to-r from-purple-900 to-purple-700 p-8">
           <div className="max-w-md mx-auto text-center">
             <h1 className="text-white text-2xl font-bold mb-4">Edit Profile</h1>
-            <p className="text-white opacity-90 mb-6">Email: {session.user?.email}</p>
+            <p className="text-white opacity-90 mb-6">Email: {session?.user?.email}</p>
           </div>
         </div>
         <div className="p-6 flex flex-col items-center justify-center">
@@ -147,7 +145,7 @@ const Profile = () => {
     
   }
 
-if (session.user?.email === "almashhadalneeq@gmail.com") {
+if (session?.user?.email === "almashhadalneeq@gmail.com") {
   return (
     <div>
       
@@ -160,7 +158,7 @@ else {
   return (
     <div>
       
-      <ProfileRating name={name || ""} email={session.user?.email || ""} />
+      {session && <ProfileRating name={name || ""} email={session.user?.email || ""} />}
       </div>
    
   );
