@@ -1,5 +1,5 @@
 // hooks/useOfflineSession.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface StoredSession {
@@ -15,22 +15,87 @@ interface StoredSession {
 export const useOfflineSession = () => {
   const { data: session, status } = useSession();
   const [offlineSession, setOfflineSession] = useState<StoredSession | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    // Initialize with the stored state if available, otherwise use navigator.onLine
+    const storedOnlineState = localStorage.getItem('connectionState');
+    return storedOnlineState ? JSON.parse(storedOnlineState) : navigator.onLine;
+  });
 
-  // Monitor online status
+  // Stable connection check with timeout
+  const checkConnection = useCallback(async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+      const response = await fetch('/api/healthcheck', {
+        method: 'HEAD',
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }, []);
+
+  // Debounced connection status update
+  const updateOnlineStatus = useCallback(async () => {
+    // First, check the basic navigator.onLine status
+    const initialStatus = navigator.onLine;
+    
+    if (!initialStatus) {
+      // If navigator says we're offline, we're definitely offline
+      setIsOnline(false);
+      localStorage.setItem('connectionState', 'false');
+      return;
+    }
+
+    // If navigator says we're online, verify with a real connection check
+    const isReallyOnline = await checkConnection();
+    
+    // Only update if the state is different
+    if (isReallyOnline !== isOnline) {
+      setIsOnline(isReallyOnline);
+      localStorage.setItem('connectionState', JSON.stringify(isReallyOnline));
+    }
+  }, [isOnline, checkConnection]);
+
+  // Monitor online status with debounce
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    let timeoutId: NodeJS.Timeout;
 
-    setIsOnline(navigator.onLine);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    const handleStatusChange = () => {
+      // Clear any pending timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      // Wait 2 seconds before updating status to prevent flickering
+      timeoutId = setTimeout(() => {
+        updateOnlineStatus();
+      }, 2000);
+    };
+
+    // Initial check
+    updateOnlineStatus();
+
+    // Set up event listeners
+    window.addEventListener('online', handleStatusChange);
+    window.addEventListener('offline', handleStatusChange);
+
+    // Set up periodic check every 30 seconds
+    const intervalId = setInterval(updateOnlineStatus, 30000);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      clearInterval(intervalId);
+      window.removeEventListener('online', handleStatusChange);
+      window.removeEventListener('offline', handleStatusChange);
     };
-  }, []);
+  }, [updateOnlineStatus]);
 
   // Store session when online
   useEffect(() => {
