@@ -3,16 +3,20 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // Disable PWA in development
+  disable: process.env.NODE_ENV === 'development',
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
+      handler: 'NetworkFirst', // Changed from StaleWhileRevalidate to NetworkFirst
       options: {
-        cacheName: 'offlineCache',
+        cacheName: 'https-calls',
+        networkTimeoutSeconds: 15,
         expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxEntries: 150,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 1 month
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
         },
       },
     },
@@ -21,18 +25,4 @@ const withPWA = require('next-pwa')({
 
 module.exports = withPWA({
   reactStrictMode: false,
-  // Removed swcMinify as it's default now
-  headers: async () => {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Service-Worker-Allowed',
-            value: '/'
-          }
-        ]
-      }
-    ]
-  }
 })

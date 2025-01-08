@@ -1,26 +1,26 @@
 {
   "name": "PWA App",
-   "short_name": "App",
+  "short_name": "App",
   "description": "An example of a PWA using Next.js and TypeScript",
-<<<<<<< HEAD
-   "start_url": "/",
-=======
-   "start_url": "/profile",
->>>>>>> 6dd1b013b417db22ae520581b9a881c1fce5792c
-   "display": "standalone",
-   "background_color": "#FFFFFF",
-   "theme_color": "#FFFFFF",
-   "orientation": "portrait",
-   "icons": [
-     {
-       "src": "/logo.png",
-       "sizes": "192x192",
-       "type": "image/png"
-     },
-     {
-       "src": "/logo.png",
-       "sizes": "512x512",
-       "type": "image/png"
-     }
-   ]
- }
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "orientation": "portrait",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
