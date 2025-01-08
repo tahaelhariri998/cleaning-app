@@ -1,9 +1,9 @@
-// app/profile/page.tsx (For App Router)
-"use client"; // This ensures this component runs on the client-side
+// app/profile/page.tsx
+"use client";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation"; // For navigation to voting page
+import { useRouter } from "next/navigation";
 import ProfileRating from './ProfileRating';
 import Admin from './admin';
 import "./globals.css";
@@ -13,35 +13,107 @@ const Profile = () => {
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const router = useRouter();
 
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOnline(navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const loadLocalData = () => {
+      if (!session?.user?.email) return;
+      
+      const localData = localStorage.getItem(`profile_${session.user.email}`);
+      if (localData) {
+        const userData = JSON.parse(localData);
+        setName(userData.name || "");
+      }
+      
+      const localPendingChanges = localStorage.getItem(`pending_${session.user.email}`);
+      if (localPendingChanges) {
+        setPendingChanges(JSON.parse(localPendingChanges));
+      }
+    };
+
+    loadLocalData();
+  }, [session]);
+
+  // Fetch user data when online
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!session?.user?.email) return;
+      if (!session?.user?.email || !isOnline) return;
 
       try {
         const response = await fetch(`/api/user?email=${session.user.email}`);
-  
-
         const userData = await response.json();
         const userName = userData?.name || "";
 
         setName(userName);
+        // Save to localStorage
+        localStorage.setItem(`profile_${session.user.email}`, JSON.stringify({ name: userName }));
 
         const nameParts = userName.trim().split(" ");
-        if (nameParts.length < 2 ) {
+        if (nameParts.length < 2) {
           setIsEditing(true);
-          setMessage(
-            "Please enter your full name (First and Last). You cannot proceed without updating."
-          );
+          setMessage("Please enter your full name (First and Last). You cannot proceed without updating.");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        // If fetch fails, try to load from localStorage
+        const localData = localStorage.getItem(`profile_${session.user.email}`);
+        if (localData) {
+          const userData = JSON.parse(localData);
+          setName(userData.name || "");
+        }
       }
     };
 
     fetchUserData();
-  }, [session]);
+  }, [session, isOnline]);
+
+  // Sync pending changes when back online
+  useEffect(() => {
+    const syncPendingChanges = async () => {
+      if (!isOnline || pendingChanges.length === 0) return;
+
+      for (const change of pendingChanges) {
+        try {
+          const response = await fetch("/api/user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(change)
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to sync change");
+          }
+        } catch (error) {
+          console.error("Error syncing change:", error);
+          return; // Stop syncing if there's an error
+        }
+      }
+
+      // Clear pending changes after successful sync
+      setPendingChanges([]);
+      localStorage.removeItem(`pending_${session?.user?.email}`);
+    };
+
+    syncPendingChanges();
+  }, [isOnline, pendingChanges]);
 
   const handleSave = async () => {
     if (!name) return;
@@ -52,52 +124,44 @@ const Profile = () => {
       return;
     }
 
+    const changeData = {
+      email: session?.user?.email,
+      name: name,
+    };
+
+    // Save to localStorage immediately
+    localStorage.setItem(`profile_${session?.user?.email}`, JSON.stringify({ name }));
+
+    if (!isOnline) {
+      // Store in pending changes
+      const newPendingChanges = [...pendingChanges, changeData];
+      setPendingChanges(newPendingChanges);
+      localStorage.setItem(`pending_${session?.user?.email}`, JSON.stringify(newPendingChanges));
+      setMessage("Changes saved locally. Will sync when back online.");
+      setIsEditing(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/user", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: session?.user?.email,
-          name: name,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changeData),
       });
 
       if (!response.ok) {
-        console.error("Failed to update user information", response);
         throw new Error("Failed to update user information");
       }
 
       setMessage("User information updated successfully");
       setIsEditing(false);
-      
-
     } catch (error) {
       console.error(`Error updating user information: ${error}`);
-      try {
-        const response = await fetch("/api/user", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: session?.user?.email,
-            name: name,
-          }),
-        });
-
-        if (!response.ok) {
-          console.error("Failed to update user information", response);
-          throw new Error("Failed to update user information");
-        }
-
-        setMessage("User information updated successfully");
-        setIsEditing(false);
-
-
-      } catch (error) {
-      setMessage(`Error updating user information: ${error}`);}
+      // Store failed request in pending changes
+      const newPendingChanges = [...pendingChanges, changeData];
+      setPendingChanges(newPendingChanges);
+      localStorage.setItem(`pending_${session?.user?.email}`, JSON.stringify(newPendingChanges));
+      setMessage("Changes saved locally. Will retry when connection improves.");
     }
   };
 
@@ -116,6 +180,9 @@ const Profile = () => {
           <div className="max-w-md mx-auto text-center">
             <h1 className="text-white text-2xl font-bold mb-4">Edit Profile</h1>
             <p className="text-white opacity-90 mb-6">Email: {session.user?.email}</p>
+            {!isOnline && (
+              <p className="text-yellow-300 text-sm">You are currently offline. Changes will be saved locally.</p>
+            )}
           </div>
         </div>
         <div className="p-6 flex flex-col items-center justify-center">
@@ -142,26 +209,21 @@ const Profile = () => {
         </div>
       </div>
     );
-    
   }
 
-if (session.user?.email === "almashhadalneeq@gmail.com") {
-  return (
-    <div>
-      
-      <Admin name={"Admin"} email={session.user?.email || ""} />
+  if (session.user?.email === "almashhadalneeq@gmail.com") {
+    return (
+      <div>
+        <Admin name={"Admin"} email={session.user?.email || ""} />
       </div>
-   
-  );
-}
-else {
+    );
+  }
+  
   return (
     <div>
-      
       <ProfileRating name={name || ""} email={session.user?.email || ""} />
-      </div>
-   
+    </div>
   );
-};}
+};
 
 export default Profile;
