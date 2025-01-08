@@ -8,13 +8,24 @@ import ProfileRating from './ProfileRating';
 import Admin from './admin';
 import "./globals.css";
 
+interface UserData {
+  email: string | null | undefined;
+  name: string;
+}
+
+interface PendingChange {
+  email: string | null | undefined;
+  name: string;
+  timestamp?: number;
+}
+
 const Profile = () => {
   const { data: session, status } = useSession();
-  const [name, setName] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [message, setMessage] = useState("");
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
+  const [name, setName] = useState<string>("");
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
   const router = useRouter();
 
   // Monitor online/offline status
@@ -39,7 +50,7 @@ const Profile = () => {
       
       const localData = localStorage.getItem(`profile_${session.user.email}`);
       if (localData) {
-        const userData = JSON.parse(localData);
+        const userData: UserData = JSON.parse(localData);
         setName(userData.name || "");
       }
       
@@ -59,7 +70,7 @@ const Profile = () => {
 
       try {
         const response = await fetch(`/api/user?email=${session.user.email}`);
-        const userData = await response.json();
+        const userData: UserData = await response.json();
         const userName = userData?.name || "";
 
         setName(userName);
@@ -76,7 +87,7 @@ const Profile = () => {
         // If fetch fails, try to load from localStorage
         const localData = localStorage.getItem(`profile_${session.user.email}`);
         if (localData) {
-          const userData = JSON.parse(localData);
+          const userData: UserData = JSON.parse(localData);
           setName(userData.name || "");
         }
       }
@@ -113,7 +124,7 @@ const Profile = () => {
     };
 
     syncPendingChanges();
-  }, [isOnline, pendingChanges]);
+  }, [isOnline, pendingChanges, session?.user?.email]);
 
   const handleSave = async () => {
     if (!name) return;
@@ -124,9 +135,10 @@ const Profile = () => {
       return;
     }
 
-    const changeData = {
+    const changeData: PendingChange = {
       email: session?.user?.email,
       name: name,
+      timestamp: Date.now()
     };
 
     // Save to localStorage immediately
@@ -156,7 +168,7 @@ const Profile = () => {
       setMessage("User information updated successfully");
       setIsEditing(false);
     } catch (error) {
-      console.error(`Error updating user information: ${error}`);
+      console.error(`Error updating user information:`, error);
       // Store failed request in pending changes
       const newPendingChanges = [...pendingChanges, changeData];
       setPendingChanges(newPendingChanges);
