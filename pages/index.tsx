@@ -1,6 +1,6 @@
 "use client"; // This ensures the component runs on the client side
 
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/router"; // Import useRouter
 import "./globals.css";
 import { useOfflineSession } from './hooks/useOfflineSession';
@@ -8,7 +8,7 @@ const Home = () => {
   
   const { session, status, isOnline } = useOfflineSession();
   const router = useRouter(); // Initialize useRouter
-
+  console.log(session, status, isOnline);
   if (session) {
     router.push("/profile"); // Navigate to the profile page if the user is logged in
     return null; // Prevent rendering the rest of the component after redirect

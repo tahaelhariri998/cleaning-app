@@ -2,7 +2,7 @@
 "use client"; // This ensures this component runs on the client-side
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+ 
 import { useRouter } from "next/navigation"; // For navigation to voting page
 import ProfileRating from './ProfileRating';
 import Admin from './admin';
@@ -11,6 +11,7 @@ import { useOfflineSession } from './hooks/useOfflineSession';
 
 const Profile = () => {
   const { session, status, isOnline } = useOfflineSession();
+  console.log(session, status, isOnline);
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
