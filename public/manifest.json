@@ -2,7 +2,7 @@
   "name": "PWA App",
    "short_name": "App",
   "description": "An example of a PWA using Next.js and TypeScript",
-   "start_url": "/login",
+   "start_url": "/",
    "display": "standalone",
    "background_color": "#FFFFFF",
    "theme_color": "#FFFFFF",
