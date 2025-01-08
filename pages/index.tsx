@@ -104,7 +104,7 @@ const Home = () => {
           </div>
           {!isOnline && (
             <div className="text-yellow-300 text-sm mb-4">
-              You're currently offline. Some features may be limited.
+              You are currently offline. Some features may be limited.
             </div>
           )}
         </div>
