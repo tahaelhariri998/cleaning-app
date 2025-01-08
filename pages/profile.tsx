@@ -15,7 +15,7 @@ const Profile = () => {
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
-  const router = useRouter();
+  //const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
