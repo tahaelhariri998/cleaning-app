@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
  
-import { useRouter } from "next/navigation"; // For navigation to voting page
+//import { useRouter } from "next/navigation"; // For navigation to voting page
 import ProfileRating from './ProfileRating';
 import Admin from './admin';
 import "./globals.css";
