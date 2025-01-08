@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
           .catch((error) => {
             // Return the offline page for navigation requests
             if (event.request.mode === 'navigate') {
-              return caches.match('/');
+              return caches.match('/profile');
             }
             throw error;
           });
