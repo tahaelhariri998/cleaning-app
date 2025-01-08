@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router"; // Import useRouter
 import "./globals.css";
-import { useOfflineSession } from './hooks/useOfflineSession';
+import { useOfflineSession } from '../hooks/useOfflineSession';
 const Home = () => {
   
   const { session, status, isOnline } = useOfflineSession();

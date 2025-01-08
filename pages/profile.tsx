@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"; // For navigation to voting page
 import ProfileRating from './ProfileRating';
 import Admin from './admin';
 import "./globals.css";
-import { useOfflineSession } from './hooks/useOfflineSession';
+import { useOfflineSession } from '../hooks/useOfflineSession';
 
 const Profile = () => {
   const { session, status, isOnline } = useOfflineSession();
