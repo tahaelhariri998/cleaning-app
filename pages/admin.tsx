@@ -14,7 +14,11 @@ interface Rating {
   email: string;
   name: string;
 }
-
+const ratingDescriptions: { [key: number]: string } = {
+  2: "Excellent",
+  1: "Good",
+  0: "Poor", // Add other mappings if necessary
+};
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
   console.log(name, email); 
   const [allRatings, setAllRatings] = useState<Rating[]>([]);
@@ -108,11 +112,12 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
         if (index === 0) medalEmoji = '🥇';
         else if (index === 1) medalEmoji = '🥈';
         else if (index === 2) medalEmoji = '🥉';
-
+        else if (index === 3) medalEmoji = '🎖️';  
+        else if (index === 4) medalEmoji = '🏅';  
         return (
           <tr
             key={userEmail}
-            className={`bg-white hover:bg-gray-100 ${index < 3 ? 'bg-yellow-100' : ''}`}
+            className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''}`}
             onClick={() => handleUserClick(userEmail)} // Add click handler
           >
             <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
@@ -238,30 +243,37 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
             </div>
           )}
 
-          {/* User Specific Ratings */}
-          {selectedUser && (
-            <div className="overflow-x-auto p-4 mt-6">
-              <h2 className="text-xl font-semibold mb-4">Ratings for {selectedUser[0].name}</h2>
-              <table className="min-w-full table-auto border-collapse table-layout-fixed">
-                <thead>
-                  <tr className="bg-gray-200 text-left">
-                    <th className="px-4 py-2 border-b text-purple-700">Rating</th>
-                    <th className="px-4 py-2 border-b text-purple-700">Customer Number</th> {/* Added customer number column */}
-                    <th className="px-4 py-2 border-b text-purple-700">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedUser.map((rating, index) => (
-                    <tr key={index} className="bg-white hover:bg-gray-100">
-                      <td className="px-4 py-2 border-b text-gray-800">{rating.rating}</td>
-                      <td className="px-4 py-2 border-b text-gray-800">{rating.customerNumber}</td> {/* Added customer number */}
-                      <td className="px-4 py-2 border-b text-gray-800">{new Date(rating.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+    {/* User Specific Ratings */}
+{selectedUser && (
+  <div className="overflow-x-auto p-4 mt-6">
+    <h2 className="text-xl font-semibold mb-4">Ratings for {selectedUser[0].name}</h2>
+    <table className="min-w-full table-auto border-collapse table-layout-fixed">
+      <thead>
+        <tr className="bg-gray-200 text-left">
+          <th className="px-4 py-2 border-b text-purple-700">Rating</th>
+          <th className="px-4 py-2 border-b text-purple-700">Customer Number</th>
+          <th className="px-4 py-2 border-b text-purple-700">Date & Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedUser.map((rating, index) => (
+          <tr key={index} className="bg-white hover:bg-gray-100">
+            <td className="px-4 py-2 border-b text-gray-800">
+              {rating.rating} - {ratingDescriptions[rating.rating] || 'Unknown'}
+            </td>
+            <td className="px-4 py-2 border-b text-gray-800">{rating.customerNumber}</td>
+            <td className="px-4 py-2 border-b text-gray-800">
+              {new Date(rating.createdAt).toLocaleString()} {/* Shows date and time */}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+
+
         </div>
         <div className="flex justify-center items-center ">
   <button
