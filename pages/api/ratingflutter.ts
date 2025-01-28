@@ -7,7 +7,7 @@ interface RatingRequestBody {
     name: string;
     email: string;
     customerNumber: string;
-    rating: number;
+    rating: string;
 }
 
 interface ErrorResponse {
@@ -50,14 +50,14 @@ export default async function handler(
             if (!name || !email || !customerNumber || rating === undefined) {
                 return res.status(400).json({ error: 'Name, email, customer number, and rating are required' } as ErrorResponse);
             }
-
+            const parsedRating = rating;
             // Insert a new rating entry into the Rating table
             const newRating = await prisma.rating.create({
                 data: {
                     name,
                     email,
                     customerNumber,
-                    rating,
+                    rating: parseInt(parsedRating),
                 },
             });
 
