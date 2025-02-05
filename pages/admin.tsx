@@ -8,7 +8,7 @@ interface ProfileRatingProps {
 }
 
 interface Rating {
-    id: string; //  Add the 'id' property to the Rating interface
+    id: string;
     rating: number;
     createdAt: string;
     customerNumber: string;
@@ -47,11 +47,13 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [dailySummary, setDailySummary] = useState<UserSummary[]>([]);
     const [visitCounts, setVisitCounts] = useState<{ [email: string]: number }>({});
     const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null); // State to track clicked row
-console.log(selectedUserEmail);
- 
+    const [summaryInitializedForDate, setSummaryInitializedForDate] = useState<Date | null>(null);
+    const [isDateChanged, setIsDateChanged] = useState(false);  //new state for tracking date change
+    console.log(selectedUserEmail);
+
     const handleComplaint = async (rating: Rating) => {
         try {
-            const updatedCustomerNumber = `${rating.customerNumber} Complaint`; // Append "Complaint"
+            const updatedCustomerNumber = `${rating.customerNumber} Complaint`;
             const response = await fetch(`/api/rating?id=${rating.id}`, {
                 method: 'PUT',
                 headers: {
@@ -60,7 +62,7 @@ console.log(selectedUserEmail);
                 body: JSON.stringify({
                     ...rating,
                     customerNumber: updatedCustomerNumber,
-                    rating: -2, // Change rating to -2
+                    rating: -2,
                 }),
             });
 
@@ -69,29 +71,26 @@ console.log(selectedUserEmail);
                 throw new Error(errorData.error || 'Failed to submit complaint');
             }
 
-            // Optimistically update the UI, so it feels responsive
             setAllRatings(prevRatings =>
-                  prevRatings?.map(r =>
+                prevRatings?.map(r =>
                     r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
                 )
             );
             setFilteredRatingsForTable(prevRatings =>
-                  prevRatings?.map(r =>
+                prevRatings?.map(r =>
                     r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
                 )
             );
 
-            if(selectedUser) {
-            setSelectedUser(prevRatings =>
-                              prevRatings ? prevRatings.map(r =>
-                                  r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
-                              ) : null
-                          );
+            if (selectedUser) {
+                setSelectedUser(prevRatings =>
+                    prevRatings ? prevRatings.map(r =>
+                        r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
+                    ) : null
+                );
             }
 
             alert(`Complaint submitted for customer number: ${updatedCustomerNumber}`);
-
-            // Optionally refetch ratings for consistency, or just rely on the optimistic update
             fetchRatings();
         } catch (error) {
             console.error('Error submitting complaint:', error);
@@ -104,7 +103,6 @@ console.log(selectedUserEmail);
     };
 
 
-    // Fetch all ratings from the API
     const fetchRatings = async () => {
         try {
             const response = await fetch('/api/rating', { method: 'GET' });
@@ -118,7 +116,6 @@ console.log(selectedUserEmail);
         }
     };
 
-    // Filter ratings by selected date
     const filterRatingsByDate = (date: Date | null) => {
         if (!date) return;
         const startOfDay = new Date(date.setHours(0, 0, 0, 0));
@@ -132,11 +129,9 @@ console.log(selectedUserEmail);
         setSelectedDayRatings(filteredRatings);
         setFilteredRatingsForTable(filteredRatings);
 
-        // Generate daily summary
-        generateDailySummary(filteredRatings);
+        return filteredRatings; // Return filtered ratings for use in useEffect
     };
 
-    // Filter ratings for a selected month
     const filterMonthlyRatings = () => {
         if (!selectedMonth) return [];
         const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
@@ -150,26 +145,50 @@ console.log(selectedUserEmail);
     };
 
     useEffect(() => {
-        fetchRatings(); // Fetch ratings when the component mounts
+        fetchRatings();
     }, []);
-
 
     useEffect(() => {
         if (selectedDate) {
-             filterRatingsByDate(selectedDate);
+            const filteredRatings = filterRatingsByDate(selectedDate);
 
+            // Check if summary is already initialized for this date
+            if (!summaryInitializedForDate || selectedDate.toDateString() !== summaryInitializedForDate.toDateString() || isDateChanged) {
+                // Generate new daily summary only if the date is different or the date has changed explicitly
+                if (filteredRatings) {
+                    generateDailySummary(filteredRatings);
+                }
+                setSummaryInitializedForDate(selectedDate);
+                setIsDateChanged(false);  // Reset the flag after using it
+            } else {
+                // Update daily summary with existing visitCounts
+                if (!filteredRatings) return;
+                const updatedDailySummary = Array.from(new Map(filteredRatings.map(rating => [rating.email, {
+                    email: rating.email,
+                    name: rating.name,
+                    visits: 0,
+                    completed: false,
+                    completedRatings: 0,
+                    points: 0,
+                }])).values()).map(user => ({
+                    ...user,
+                    completedRatings: filteredRatings.filter(rating => rating.email === user.email).length,
+                    visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] :
+                        filteredRatings.filter(rating => rating.email === user.email).length,
+                }));
+                setDailySummary(updatedDailySummary);
+                setFilteredRatingsForTable(filteredRatings);
+            }
         }
-
-    }, [selectedDate]);
-
+    }, [selectedDate, isDateChanged]);  // Also include isDateChanged as a dependency
 
     useEffect(() => {
         if (activeTab === 'monthly') filterMonthlyRatings();
     }, [selectedMonth, activeTab]);
-    useEffect(() => {
-        if (activeTab === 'all-time') setFilteredRatingsForTable(allRatings)
-    }, [activeTab]);
 
+    useEffect(() => {
+        if (activeTab === 'all-time') setFilteredRatingsForTable(allRatings);
+    }, [activeTab]);
 
     const handleUserClick = (email: string) => {
         let userRatings: Rating[] = [];
@@ -183,13 +202,11 @@ console.log(selectedUserEmail);
             userRatings = selectedDayRatings.filter((rating) => rating.email === email)
         }
         setSelectedUser(userRatings);
-        setSelectedUserEmail(email); // Set the selected user's email
-        setClickedRowEmail(email); // Update the clicked row's email
+        setSelectedUserEmail(email);
+        setClickedRowEmail(email);
     };
 
-
-
-   const renderTable = (ratingsData: Rating[]) => {
+    const renderTable = (ratingsData: Rating[]) => {
         const aggregatedRatings = Object.entries(
             ratingsData.reduce((acc: { [key: string]: { name: string; rating: number; customerNumber: string } }, rating) => {
                 const userKey = rating.email;
@@ -209,12 +226,12 @@ console.log(selectedUserEmail);
                 if (index === 0) medalEmoji = '🥇';
                 else if (index === 1) medalEmoji = '🥈';
                 else if (index === 2) medalEmoji = '🥉';
-                 else if (index === 3) medalEmoji = '🎖️';
+                else if (index === 3) medalEmoji = '🎖️';
                 else if (index === 4) medalEmoji = '🏅';
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${(clickedRowEmail === userEmail) ? 'bg-yellow-200' : ''}`} // Added background color for clicked row
+                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${(clickedRowEmail === userEmail) ? 'bg-yellow-200' : ''}`}
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
@@ -226,26 +243,24 @@ console.log(selectedUserEmail);
                 );
             });
     };
-    const handleVisitChange = (email: string, value: string) => {
-       const numValue = Number(value); // Convert string to number
 
-        // Ensure that visits can not be less than completed ratings
+    const handleVisitChange = (email: string, value: string) => {
+        const numValue = Number(value);
+
         const completedRatings = dailySummary.find(user => user.email === email)?.completedRatings || 0;
         if (numValue < completedRatings) {
             alert(`Visits cannot be less than completed ratings (${completedRatings}) for ${email}`);
-             // Reset the input value if the condition is violated.
             setVisitCounts(prevCounts => ({
                 ...prevCounts,
-                [email]: completedRatings, // Set it back to the completed ratings value
+                [email]: completedRatings,
             }));
             setDailySummary(prevSummary =>
-            prevSummary.map(user =>
-              user.email === email ? { ...user, visits: completedRatings } : user
-            )
-           );
-             return;
+                prevSummary.map(user =>
+                    user.email === email ? { ...user, visits: completedRatings } : user
+                )
+            );
+            return;
         }
-        // Update visit counts if the value is valid
         const newVisits = {
             ...visitCounts,
             [email]: numValue,
@@ -269,39 +284,40 @@ console.log(selectedUserEmail);
                     if (!completed) {
                         const difference = visitCount - completedRatingsCount;
                         const completedRatingsTotal = selectedDayRatings
-                        .filter(rating => rating.email === email)
-                        .reduce((sum, rating) => sum + rating.rating, 0);
-                         updatedPoints = -2 * difference +completedRatingsTotal; // Calculate points penalty for incomplete
-                         for (let i = 0; i < difference; i++) {
+                            .filter(rating => rating.email === email)
+                            .reduce((sum, rating) => sum + rating.rating, 0);
+                        updatedPoints = -2 * difference + completedRatingsTotal;
 
-                          const newRating = {
-                            name,
-                            email,
-                            "customerNumber": "penalty",
-                            rating: -2,
-                            createdAt: new Date().toISOString()
-                          };
+                        for (let i = 0; i < difference; i++) {
 
-                          try {
-                            const response = await fetch('/api/rating', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify(newRating),
-                            });
+                            const newRating = {
+                                name,
+                                email,
+                                "customerNumber": "penalty",
+                                rating: -2,
+                                createdAt: new Date().toISOString()
+                            };
 
-                            if (!response.ok) throw new Error('Failed to submit rating');
-                            fetchRatings();
-                          } catch (error) {
-                            console.error('Error submitting rating:', error);
+                            try {
+                                const response = await fetch('/api/rating', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(newRating),
+                                });
 
-                          }
-                          }
+                                if (!response.ok) throw new Error('Failed to submit rating');
+                                fetchRatings();
+                            } catch (error) {
+                                console.error('Error submitting rating:', error);
+
+                            }
+                        }
 
                     } else {
                         const completedRatingsTotal = selectedDayRatings
                             .filter(rating => rating.email === email)
                             .reduce((sum, rating) => sum + rating.rating, 0);
-                         updatedPoints = completedRatingsTotal;
+                        updatedPoints = completedRatingsTotal;
                     }
 
                     return { ...user, completed, points: updatedPoints, clicked: true };
@@ -313,40 +329,41 @@ console.log(selectedUserEmail);
         updateSummary();
     };
 
-     const generateDailySummary = (ratings: Rating[]) => {
-         const userMap = new Map<string, UserSummary>();
+    const generateDailySummary = (ratings: Rating[]) => {
+        const userMap = new Map<string, UserSummary>();
 
-         ratings.forEach((rating) => {
-             if (!userMap.has(rating.email)) {
-                 userMap.set(rating.email, {
-                     email: rating.email,
-                     name: rating.name,
-                     visits: 0,  // Default visits
-                     completed: false,
-                     completedRatings: 0,
-                     points: 0,
-                 });
-             }
-             const user = userMap.get(rating.email);
-             if (user) {
-                 user.completedRatings++;
-             }
+        ratings.forEach((rating) => {
+            if (!userMap.has(rating.email)) {
+                userMap.set(rating.email, {
+                    email: rating.email,
+                    name: rating.name,
+                    visits: 0,  // Default visits
+                    completed: false,
+                    completedRatings: 0,
+                    points: 0,
+                });
+            }
+            const user = userMap.get(rating.email);
+            if (user) {
+                user.completedRatings++;
+            }
 
-         });
-            // Ensure visits default to completedRatings for new users
-         userMap.forEach(user => {
-         if (visitCounts[user.email] === undefined) {
-           visitCounts[user.email] = user.completedRatings
-         }
-         });
+        });
 
+        const newVisitCounts: { [key: string]: number } = {};
 
-         setDailySummary(Array.from(userMap.values()).map(user => ({
-             ...user,
-             visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
-          })
-         ));
-     };
+        userMap.forEach(user => {
+            newVisitCounts[user.email] = user.completedRatings;
+        });
+
+        setVisitCounts(newVisitCounts);
+
+        setDailySummary(Array.from(userMap.values()).map(user => ({
+            ...user,
+            visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
+        })));
+    };
+
     const renderDailySummaryTable = () => {
         return (
             <div className="overflow-x-auto p-4 mt-4">
@@ -361,48 +378,54 @@ console.log(selectedUserEmail);
                         </tr>
                     </thead>
                     <tbody>
-                        {dailySummary.map((user) => (
-                            <tr key={user.email} className={`bg-white hover:bg-gray-100 ${clickedRowEmail === user.email ? 'bg-green-200' : ''}`}>
-                                <td className="px-4 py-2 border-b text-gray-800">{user.name}</td>
-                                <td className="px-4 py-2 border-b text-gray-800">
-                                    <input
-                                        type="number"
-                                        className="border rounded px-2 py-1 w-20"
-                                        value={visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.visits}
-                                        onChange={(e) => handleVisitChange(user.email, e.target.value)}
-                                    />
-                                </td>
-                                <td className="px-4 py-2 border-b text-gray-800">{user.completedRatings}</td>
-                                <td className="px-4 py-2 border-b text-gray-800">{user.points}</td>
-                                <td className="px-4 py-2 border-b text-gray-800">
-                                    {!user.clicked ? (
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => handleCompletionStatus(user.email, true)}
-                                                 disabled={user.visits !== user.completedRatings}
-                                                className={`bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded ${user.visits !== user.completedRatings ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        {dailySummary.map((user) => {
 
-                                            >
-                                                Complete
-                                            </button>
-                                            <button
-                                                 onClick={() => handleCompletionStatus(user.email, false)}
-                                                   disabled={user.visits === user.completedRatings}
-                                                className={`bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded ${user.visits === user.completedRatings ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                Not Complete
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <span className={`font-semibold ${user.completed ? "text-green-600" : "text-red-600"}`}>
-                                            {user.completed ? "Completed" : "Not Completed"}
-                                        </span>
-                                    )}
+                            const isDisabledComplete = user.visits !== user.completedRatings;
+                            const isDisabledNotComplete = user.visits === user.completedRatings;
 
-                                </td>
+                            return (
+                                <tr key={user.email} className={`bg-white hover:bg-gray-100 ${clickedRowEmail === user.email ? 'bg-green-200' : ''}`}>
+                                    <td className="px-4 py-2 border-b text-gray-800">{user.name}</td>
+                                    <td className="px-4 py-2 border-b text-gray-800">
+                                        <input
+                                            type="number"
+                                            className="border rounded px-2 py-1 w-20"
+                                            value={visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.visits}
+                                            onChange={(e) => handleVisitChange(user.email, e.target.value)}
+                                        />
+                                    </td>
+                                    <td className="px-4 py-2 border-b text-gray-800">{user.completedRatings}</td>
+                                    <td className="px-4 py-2 border-b text-gray-800">{user.points}</td>
+                                    <td className="px-4 py-2 border-b text-gray-800">
+                                        {!user.clicked ? (
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    onClick={() => handleCompletionStatus(user.email, true)}
+                                                    disabled={isDisabledComplete}
+                                                    className={`bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded ${isDisabledComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
 
-                            </tr>
-                        ))}
+                                                >
+                                                    Complete
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCompletionStatus(user.email, false)}
+                                                    disabled={isDisabledNotComplete}
+                                                    className={`bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded ${isDisabledNotComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    Not Complete
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className={`font-semibold ${user.completed ? "text-green-600" : "text-red-600"}`}>
+                                                {user.completed ? "Completed" : "Not Completed"}
+                                            </span>
+                                        )}
+
+                                    </td>
+
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -440,7 +463,6 @@ console.log(selectedUserEmail);
                         </div>
                     </div>
 
-                    {/* All Time Ratings */}
                     {activeTab === 'all-time' && (
                         <div className="overflow-x-auto p-4">
                             <table className="min-w-full table-auto border-collapse table-layout-fixed">
@@ -458,7 +480,6 @@ console.log(selectedUserEmail);
                     )}
 
 
-                    {/* Monthly Ratings */}
                     {activeTab === 'monthly' && (
                         <div className="p-4 text-center">
                             <DatePicker
@@ -473,7 +494,7 @@ console.log(selectedUserEmail);
                                 <table className="min-w-full table-auto border-collapse table-layout-fixed">
                                     <thead>
                                         <tr className="bg-gray-200 text-left">
-                                             <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
+                                            <th className="px-4 py-2 border-b text-purple-700 w-1/12">Rank</th>
                                             <th className="px-4 py-2 border-b text-purple-700 w-1/4">Name</th>
                                             <th className="px-4 py-2 border-b text-purple-700 w-1/6">Total Rating</th>
                                         </tr>
@@ -485,18 +506,17 @@ console.log(selectedUserEmail);
 
                     )}
 
-                    {/* Select Day Ratings */}
                     {activeTab === 'select-day' && (
                         <div className="p-4 text-center">
                             <DatePicker
                                 selected={selectedDate}
-                                onChange={(date) => setSelectedDate(date)}
+                                onChange={(date) => { setSelectedDate(date); setIsDateChanged(true); }}  //set the date change to true when a new date is picked
                                 className="border rounded-lg px-4 py-2"
                                 placeholderText="Select a date"
                             />
                             {selectedDate && (
                                 <div className="mt-4">
-                                     <div className="overflow-x-auto p-4 mt-4">
+                                    <div className="overflow-x-auto p-4 mt-4">
                                         <table className="min-w-full table-auto border-collapse table-layout-fixed">
                                             <thead>
                                                 <tr className="bg-gray-200 text-left">
@@ -515,7 +535,6 @@ console.log(selectedUserEmail);
                         </div>
                     )}
 
-                    {/* User Specific Ratings */}
                     {selectedUser && (
                         <div className="overflow-x-auto p-4 mt-6">
                             <h2 className="text-xl font-semibold mb-4">Ratings for {selectedUser[0].name}</h2>
@@ -539,12 +558,17 @@ console.log(selectedUserEmail);
                                                 {new Date(rating.createdAt).toLocaleString()}
                                             </td>
                                             <td className="px-4 py-2 border-b text-gray-800">
-                                                <button
-                                                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
-                                                    onClick={() => handleComplaint(rating)}
-                                                >
-                                                    Complaint
-                                                </button>
+                                                {rating.customerNumber.includes("Complaint") ? (
+                                                    <span className="text-red-500">Complained</span>
+
+                                                ) : (
+                                                    <button
+                                                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                                                        onClick={() => handleComplaint(rating)}
+                                                    >
+                                                        Complaint
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
