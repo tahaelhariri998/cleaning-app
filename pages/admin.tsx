@@ -48,6 +48,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [visitCounts, setVisitCounts] = useState<{ [email: string]: number }>({});
     const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null); // State to track clicked row
 console.log(selectedUserEmail);
+ 
     const handleComplaint = async (rating: Rating) => {
         try {
             const updatedCustomerNumber = `${rating.customerNumber} Complaint`; // Append "Complaint"
@@ -210,11 +211,10 @@ console.log(selectedUserEmail);
                 else if (index === 2) medalEmoji = '🥉';
                  else if (index === 3) medalEmoji = '🎖️';
                 else if (index === 4) medalEmoji = '🏅';
-                const isClicked = clickedRowEmail === userEmail; // Check if this row is clicked
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${isClicked ? 'bg-gray-300' : ''}`} // Added background color for clicked row
+                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${(clickedRowEmail === userEmail) ? 'bg-yellow-200' : ''}`} // Added background color for clicked row
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
