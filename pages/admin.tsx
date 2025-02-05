@@ -47,7 +47,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [dailySummary, setDailySummary] = useState<UserSummary[]>([]);
     const [visitCounts, setVisitCounts] = useState<{ [email: string]: number }>({});
     const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null); // State to track clicked row
-
+console.log(selectedUserEmail);
     const handleComplaint = async (rating: Rating) => {
         try {
             const updatedCustomerNumber = `${rating.customerNumber} Complaint`; // Append "Complaint"
