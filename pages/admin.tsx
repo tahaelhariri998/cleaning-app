@@ -8,6 +8,7 @@ interface ProfileRatingProps {
 }
 
 interface Rating {
+    id: string; //  Add the 'id' property to the Rating interface
     rating: number;
     createdAt: string;
     customerNumber: string;
@@ -45,6 +46,61 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [filteredRatingsForTable, setFilteredRatingsForTable] = useState<Rating[]>([]);
     const [dailySummary, setDailySummary] = useState<UserSummary[]>([]);
     const [visitCounts, setVisitCounts] = useState<{ [email: string]: number }>({});
+    const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null); // State to track clicked row
+
+    const handleComplaint = async (rating: Rating) => {
+        try {
+            const updatedCustomerNumber = `${rating.customerNumber} Complaint`; // Append "Complaint"
+            const response = await fetch(`/api/rating?id=${rating.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...rating,
+                    customerNumber: updatedCustomerNumber,
+                    rating: -2, // Change rating to -2
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to submit complaint');
+            }
+
+            // Optimistically update the UI, so it feels responsive
+            setAllRatings(prevRatings =>
+                  prevRatings?.map(r =>
+                    r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
+                )
+            );
+            setFilteredRatingsForTable(prevRatings =>
+                  prevRatings?.map(r =>
+                    r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
+                )
+            );
+
+            if(selectedUser) {
+            setSelectedUser(prevRatings =>
+                              prevRatings ? prevRatings.map(r =>
+                                  r.id === rating.id ? { ...r, customerNumber: updatedCustomerNumber, rating: -2 } : r
+                              ) : null
+                          );
+            }
+
+            alert(`Complaint submitted for customer number: ${updatedCustomerNumber}`);
+
+            // Optionally refetch ratings for consistency, or just rely on the optimistic update
+            fetchRatings();
+        } catch (error) {
+            console.error('Error submitting complaint:', error);
+            if (error instanceof Error) {
+                alert(`Failed to submit complaint: ${error.message}`);
+            } else {
+                alert('Failed to submit complaint');
+            }
+        }
+    };
 
 
     // Fetch all ratings from the API
@@ -53,6 +109,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
             const response = await fetch('/api/rating', { method: 'GET' });
             if (!response.ok) throw new Error('Failed to fetch ratings');
             const data = await response.json();
+
             setAllRatings(data);
             setFilteredRatingsForTable(data);
         } catch (error) {
@@ -118,6 +175,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
         }
         setSelectedUser(userRatings);
         setSelectedUserEmail(email); // Set the selected user's email
+        setClickedRowEmail(email); // Update the clicked row's email
     };
 
 
@@ -144,10 +202,11 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                 else if (index === 2) medalEmoji = '🥉';
                  else if (index === 3) medalEmoji = '🎖️';
                 else if (index === 4) medalEmoji = '🏅';
+                const isClicked = clickedRowEmail === userEmail; // Check if this row is clicked
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${selectedUserEmail === userEmail ? 'bg-blue-200' : ''}`}
+                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${selectedUserEmail === userEmail ? 'bg-blue-200' : ''} ${isClicked ? 'bg-green-200' : ''}`} // Added background color for clicked row
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
@@ -221,12 +280,12 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify(newRating),
                             });
-                    
+
                             if (!response.ok) throw new Error('Failed to submit rating');
                             fetchRatings();
                           } catch (error) {
                             console.error('Error submitting rating:', error);
-                            
+
                           }
                           }
 
@@ -457,6 +516,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                                         <th className="px-4 py-2 border-b text-purple-700">Rating</th>
                                         <th className="px-4 py-2 border-b text-purple-700">Customer Number</th>
                                         <th className="px-4 py-2 border-b text-purple-700">Date & Time</th>
+                                        <th className="px-4 py-2 border-b text-purple-700">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -468,6 +528,14 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                                             <td className="px-4 py-2 border-b text-gray-800">{rating.customerNumber}</td>
                                             <td className="px-4 py-2 border-b text-gray-800">
                                                 {new Date(rating.createdAt).toLocaleString()}
+                                            </td>
+                                            <td className="px-4 py-2 border-b text-gray-800">
+                                                <button
+                                                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                                                    onClick={() => handleComplaint(rating)}
+                                                >
+                                                    Complaint
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
