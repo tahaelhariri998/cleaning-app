@@ -3,6 +3,14 @@
 import prisma from '../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 
+interface Rating {
+    id: number; // Assuming your Rating model has an 'id' field
+    name: string;
+    email: string;
+    customerNumber: string;
+    rating: number;
+}
+
 interface RatingRequestBody {
     name: string;
     email: string;
@@ -16,8 +24,8 @@ interface ErrorResponse {
 
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse
-): Promise<void | NextApiResponse<any>> {
+    res: NextApiResponse<Rating | Rating[] | ErrorResponse> // Specify possible response types
+): Promise<void | NextApiResponse<Rating | Rating[] | ErrorResponse>> {
     if (req.method === 'GET') {
         // Handle the GET method if needed (for fetching ratings or specific rating)
         try {
@@ -26,7 +34,7 @@ export default async function handler(
             if (!email || typeof email !== 'string') {
                 const ratings = await prisma.rating.findMany();
                 return res.status(200).json(ratings);
-                
+
             }
 
             // Fetch the ratings by email (if needed)
@@ -34,21 +42,21 @@ export default async function handler(
                 where: { email },
             });
 
-            if (!ratings) {
-                return res.status(404).json({ error: 'Ratings not found' } as ErrorResponse);
+            if (!ratings || ratings.length === 0) {  //Check if the result is empty
+                return res.status(404).json({ error: 'Ratings not found' });
             }
 
             return res.status(200).json(ratings);
         } catch (error) {
             console.error('Failed to fetch ratings', error);
-            return res.status(500).json({ error: 'Failed to fetch ratings' } as ErrorResponse);
+            return res.status(500).json({ error: 'Failed to fetch ratings' });
         }
     } else if (req.method === 'POST') {
         try {
             const { name, email, customerNumber, rating }: RatingRequestBody = req.body;
 
             if (!name || !email || !customerNumber || rating === undefined) {
-                return res.status(400).json({ error: 'Name, email, customer number, and rating are required' } as ErrorResponse);
+                return res.status(400).json({ error: 'Name, email, customer number, and rating are required' });
             }
 
             // Insert a new rating entry into the Rating table
@@ -64,7 +72,7 @@ export default async function handler(
             return res.status(200).json(newRating);
         } catch (error) {
             console.error('Failed to create rating', error);
-            return res.status(500).json({ error: 'Failed to create rating' } as ErrorResponse);
+            return res.status(500).json({ error: 'Failed to create rating' });
         }
     } else if (req.method === 'PUT') {
         try {
@@ -72,11 +80,11 @@ export default async function handler(
             const { name, email, customerNumber, rating }: RatingRequestBody = req.body;
 
             if (!id || typeof id !== 'string') {
-                return res.status(400).json({ error: 'ID is required for updating' } as ErrorResponse);
+                return res.status(400).json({ error: 'ID is required for updating' });
             }
 
             if (!name || !email || !customerNumber || rating === undefined) {
-                return res.status(400).json({ error: 'Name, email, customer number, and rating are required' } as ErrorResponse);
+                return res.status(400).json({ error: 'Name, email, customer number, and rating are required' });
             }
 
 
@@ -95,7 +103,7 @@ export default async function handler(
             return res.status(200).json(updatedRating);
         } catch (error) {
             console.error('Failed to update rating', error);
-            return res.status(500).json({ error: 'Failed to update rating' } as ErrorResponse);
+            return res.status(500).json({ error: 'Failed to update rating' });
         }
     }
      else if (req.method === 'DELETE') {
@@ -103,7 +111,7 @@ export default async function handler(
             const { id } = req.query;
 
             if (!id || typeof id !== 'string') {
-                return res.status(400).json({ error: 'ID is required for deletion' } as ErrorResponse);
+                return res.status(400).json({ error: 'ID is required for deletion' });
             }
 
             await prisma.rating.delete({
@@ -115,10 +123,10 @@ export default async function handler(
             return res.status(204).end(); // No content, successful deletion
         } catch (error) {
             console.error('Failed to delete rating', error);
-            return res.status(500).json({ error: 'Failed to delete rating' } as ErrorResponse);
+            return res.status(500).json({ error: 'Failed to delete rating' });
         }
     }
     else {
-        return res.status(405).json({ error: 'Method Not Allowed' } as ErrorResponse);
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 }
