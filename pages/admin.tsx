@@ -151,9 +151,17 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     useEffect(() => {
         fetchRatings(); // Fetch ratings when the component mounts
     }, []);
+
+
     useEffect(() => {
-        if (selectedDate) filterRatingsByDate(selectedDate);
+        if (selectedDate) {
+             filterRatingsByDate(selectedDate);
+
+        }
+
     }, [selectedDate]);
+
+
     useEffect(() => {
         if (activeTab === 'monthly') filterMonthlyRatings();
     }, [selectedMonth, activeTab]);
@@ -206,7 +214,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${selectedUserEmail === userEmail ? 'bg-blue-200' : ''} ${isClicked ? 'bg-green-200' : ''}`} // Added background color for clicked row
+                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${isClicked ? 'bg-gray-300' : ''}`} // Added background color for clicked row
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
@@ -304,40 +312,41 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
         };
         updateSummary();
     };
-    const generateDailySummary = (ratings: Rating[]) => {
-        const userMap = new Map<string, UserSummary>();
 
-        ratings.forEach((rating) => {
-            if (!userMap.has(rating.email)) {
-                userMap.set(rating.email, {
-                    email: rating.email,
-                    name: rating.name,
-                    visits: 0,  // Default visits
-                    completed: false,
-                    completedRatings: 0,
-                    points: 0,
-                });
-            }
-            const user = userMap.get(rating.email);
-            if (user) {
-                user.completedRatings++;
-            }
+     const generateDailySummary = (ratings: Rating[]) => {
+         const userMap = new Map<string, UserSummary>();
 
-        });
-           // Ensure visits default to completedRatings for new users
-        userMap.forEach(user => {
-        if (visitCounts[user.email] === undefined) {
-          visitCounts[user.email] = user.completedRatings
-        }
-        });
+         ratings.forEach((rating) => {
+             if (!userMap.has(rating.email)) {
+                 userMap.set(rating.email, {
+                     email: rating.email,
+                     name: rating.name,
+                     visits: 0,  // Default visits
+                     completed: false,
+                     completedRatings: 0,
+                     points: 0,
+                 });
+             }
+             const user = userMap.get(rating.email);
+             if (user) {
+                 user.completedRatings++;
+             }
+
+         });
+            // Ensure visits default to completedRatings for new users
+         userMap.forEach(user => {
+         if (visitCounts[user.email] === undefined) {
+           visitCounts[user.email] = user.completedRatings
+         }
+         });
 
 
-        setDailySummary(Array.from(userMap.values()).map(user => ({
-            ...user,
-            visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
-         })
-        ));
-    };
+         setDailySummary(Array.from(userMap.values()).map(user => ({
+             ...user,
+             visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
+          })
+         ));
+     };
     const renderDailySummaryTable = () => {
         return (
             <div className="overflow-x-auto p-4 mt-4">
@@ -353,7 +362,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                     </thead>
                     <tbody>
                         {dailySummary.map((user) => (
-                            <tr key={user.email} className="bg-white hover:bg-gray-100">
+                            <tr key={user.email} className={`bg-white hover:bg-gray-100 ${clickedRowEmail === user.email ? 'bg-green-200' : ''}`}>
                                 <td className="px-4 py-2 border-b text-gray-800">{user.name}</td>
                                 <td className="px-4 py-2 border-b text-gray-800">
                                     <input
