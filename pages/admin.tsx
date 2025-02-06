@@ -231,7 +231,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100 ${index < 5 ? 'bg-yellow-100' : ''} ${(clickedRowEmail === userEmail) ? 'bg-yellow-200' : ''}`}
+                        className={`bg-white hover:bg-gray-100  ${(clickedRowEmail === userEmail) ? 'bg-cyan-400 hover:bg-cyan-400 ' : ''}`}
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
