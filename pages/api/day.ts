@@ -1,4 +1,4 @@
-// pages/api/daylyReports.ts
+// pages/api/day.ts  (Assuming you renamed it to /api/day)
 
 import prisma from '../../lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -17,14 +17,19 @@ export default async function handler(
         }
     } else if (req.method === 'POST') {
         try {
-            const { name, email, compleated } = req.body;
+            const { name, email, compleated, createdAt } = req.body;  // Add createdAt to the destructured variables
 
-            if (!name || !email || compleated === undefined) {
-                return res.status(400).json({ error: 'Name, email, and completed status are required' });
+            if (!name || !email || compleated === undefined || !createdAt) {  // Validate createdAt also
+                return res.status(400).json({ error: 'Name, email, completed status, and createdAt are required' });
             }
 
             const newReport = await prisma.daylyReports.create({
-                data: { name, email, compleated },
+                data: {
+                    name,
+                    email,
+                    compleated,
+                    createdAt: new Date(createdAt),  // Parse the date string
+                },
             });
 
             return res.status(201).json(newReport);

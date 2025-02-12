@@ -16,6 +16,14 @@ interface Rating {
     name: string;
 }
 
+interface DaylyReport {
+    id: number; // Changed to number to match your schema
+    compleated: boolean; // Corrected typo
+    createdAt: string; // Assuming your DateTime is serialized to a string
+    email: string;
+    name: string;
+}
+
 interface UserSummary {
     email: string;
     name: string;
@@ -35,7 +43,6 @@ const ratingDescriptions: { [key: number]: string } = {
 };
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
-    console.log(name, email);
     const [allRatings, setAllRatings] = useState<Rating[]>([]);
     const [selectedDayRatings, setSelectedDayRatings] = useState<Rating[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -46,10 +53,54 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [filteredRatingsForTable, setFilteredRatingsForTable] = useState<Rating[]>([]);
     const [dailySummary, setDailySummary] = useState<UserSummary[]>([]);
     const [visitCounts, setVisitCounts] = useState<{ [email: string]: number }>({});
-    const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null); // State to track clicked row
+    const [clickedRowEmail, setClickedRowEmail] = useState<string | null>(null);
     const [summaryInitializedForDate, setSummaryInitializedForDate] = useState<Date | null>(null);
-    const [isDateChanged, setIsDateChanged] = useState(false);  //new state for tracking date change
-    console.log(selectedUserEmail);
+    const [isDateChanged, setIsDateChanged] = useState(false);
+    const [daylyReports, setDaylyReports] = useState<DaylyReport[]>([]); // Store the fetched daylyReports data
+    const [loading, setLoading] = useState(true); // Add a loading state
+
+
+    const handleComplete = async (email: string, complete: boolean, reportDate: Date) => {
+        console.log("Selected Date before handleComplete:", reportDate); // Add this line
+        try {
+            const response = await fetch('/api/day', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    compleated: complete,
+                    createdAt: reportDate, // Use the selected date
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create daily report');
+            }
+
+            // Optionally, update the local state with the new daily report
+           await fetchDaylyReports();
+
+            // Optionally, update the dailySummary to reflect the change (if needed)
+             setDailySummary(prevSummary =>
+                prevSummary.map(user =>
+                    user.email === email ? { ...user, clicked: true, completed: complete } : user
+                )
+            );
+        } catch (error) {
+            console.error('Error creating daily report:', error);
+            if (error instanceof Error) {
+                alert(`Failed to create daily report: ${error.message}`);
+            } else {
+                alert('Failed to create daily report');
+            }
+        }
+    };
+
+
 
     const handleComplaint = async (rating: Rating) => {
         try {
@@ -143,9 +194,25 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
         setFilteredRatingsForTable(filteredRatings);
         return filteredRatings;
     };
+     // Fetch all rows from /api/day
+     const fetchDaylyReports = async () => {
+        try {
+            const response = await fetch('/api/day', { method: 'GET' });
+            if (!response.ok) {
+                throw new Error('Failed to fetch daylyReports');
+            }
+            const data = await response.json();
+            setDaylyReports(data);
+            setLoading(false); // Set loading to false after data is fetched
+        } catch (error) {
+            console.error('Error fetching daylyReports:', error);
+            setLoading(false); // Set loading to false even if there's an error
+        }
+    };
 
     useEffect(() => {
         fetchRatings();
+        fetchDaylyReports();
     }, []);
 
     useEffect(() => {
@@ -180,7 +247,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                 setFilteredRatingsForTable(filteredRatings);
             }
         }
-    }, [selectedDate, isDateChanged]);  // Also include isDateChanged as a dependency
+    }, [selectedDate, isDateChanged, daylyReports]);  // Also include isDateChanged as a dependency + daylyReports
 
     useEffect(() => {
         if (activeTab === 'monthly') filterMonthlyRatings();
@@ -274,6 +341,20 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     };
 
     const handleCompletionStatus = async (email: string, completed: boolean) => {
+        if (!selectedDate) {
+            console.error("No date selected to mark completion status.");
+            return;
+        }
+        
+        try {
+            await handleComplete(email, completed, selectedDate); // Call the function to create the daily report
+        } catch (error) {
+            console.error("Error in handleCompletionStatus:", error);
+            // Optionally, revert the local state if the API call fails
+            // setDailySummary(prevSummary => ...);
+            return;
+        }
+
         const updateSummary = async () => {
             const updatedSummary = await Promise.all(dailySummary.map(async (user) => {
                 if (user.email === email) {
@@ -329,40 +410,54 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
         updateSummary();
     };
 
-    const generateDailySummary = (ratings: Rating[]) => {
-        const userMap = new Map<string, UserSummary>();
+  const generateDailySummary = (ratings: Rating[]) => {
+    const userMap = new Map<string, UserSummary>();
 
-        ratings.forEach((rating) => {
-            if (!userMap.has(rating.email)) {
-                userMap.set(rating.email, {
-                    email: rating.email,
-                    name: rating.name,
-                    visits: 0,  // Default visits
-                    completed: false,
-                    completedRatings: 0,
-                    points: 0,
-                });
-            }
-            const user = userMap.get(rating.email);
-            if (user) {
-                user.completedRatings++;
-            }
-
+    ratings.forEach((rating) => {
+      if (!userMap.has(rating.email)) {
+        userMap.set(rating.email, {
+          email: rating.email,
+          name: rating.name,
+          visits: 0,  // Default visits
+          completed: false,
+          completedRatings: 0,
+          points: 0,
         });
+      }
+      const user = userMap.get(rating.email);
+      if (user) {
+        user.completedRatings++;
+      }
+    });
 
-        const newVisitCounts: { [key: string]: number } = {};
+    const newVisitCounts: { [key: string]: number } = {};
 
-        userMap.forEach(user => {
-            newVisitCounts[user.email] = user.completedRatings;
-        });
+    userMap.forEach(user => {
+      newVisitCounts[user.email] = user.completedRatings;
+    });
 
-        setVisitCounts(newVisitCounts);
+    setVisitCounts(newVisitCounts);
 
-        setDailySummary(Array.from(userMap.values()).map(user => ({
-            ...user,
-            visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
-        })));
-    };
+    // Update dailySummary based on fetched daylyReports
+    setDailySummary(Array.from(userMap.values()).map(user => {
+      // Find the entry in daylyReports for this user's email AND for the selected date
+      const dailyReportEntry = daylyReports.find(report =>
+        report.email === user.email &&
+        new Date(report.createdAt).toDateString() === selectedDate?.toDateString()
+      );
+
+      const clicked = !!dailyReportEntry;
+      const completed = dailyReportEntry ? dailyReportEntry.compleated : false;
+
+      return {
+        ...user,
+        visits: visitCounts[user.email] !== undefined ? visitCounts[user.email] : user.completedRatings,
+        clicked: clicked,
+        completed: completed, // set the correct complete value
+      };
+    }));
+  };
+
 
     const renderDailySummaryTable = () => {
         return (
@@ -380,8 +475,15 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                     <tbody>
                         {dailySummary.map((user) => {
 
-                            const isDisabledComplete = user.visits !== user.completedRatings;
-                            const isDisabledNotComplete = user.visits === user.completedRatings;
+                            // Check if there's a daily report entry for the user on the selected date
+                            const dailyReportEntry = daylyReports.find(report =>
+                                report.email === user.email &&
+                                new Date(report.createdAt).toDateString() === selectedDate?.toDateString()
+                            );
+
+                            // Use the existence of the daily report entry and its 'compleated' status to determine disable state
+                            const isDisabledComplete = user.visits !== user.completedRatings || dailyReportEntry?.compleated === true;
+                            const isDisabledNotComplete = user.visits === user.completedRatings || dailyReportEntry?.compleated === false;
 
                             return (
                                 <tr key={user.email} className={`bg-white hover:bg-gray-100 ${clickedRowEmail === user.email ? 'bg-green-200' : ''}`}>
@@ -397,7 +499,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                                     <td className="px-4 py-2 border-b text-gray-800">{user.completedRatings}</td>
                                     <td className="px-4 py-2 border-b text-gray-800">{user.points}</td>
                                     <td className="px-4 py-2 border-b text-gray-800">
-                                        {!user.clicked ? (
+                                        {!dailyReportEntry ? (
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => handleCompletionStatus(user.email, true)}
@@ -416,8 +518,8 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <span className={`font-semibold ${user.completed ? "text-green-600" : "text-red-600"}`}>
-                                                {user.completed ? "Completed" : "Not Completed"}
+                                            <span className={`font-semibold ${dailyReportEntry.compleated ? "text-green-600" : "text-red-600"}`}>
+                                                {dailyReportEntry.compleated ? "Completed" : "Not Completed"}
                                             </span>
                                         )}
 
