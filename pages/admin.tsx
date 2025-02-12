@@ -43,12 +43,14 @@ const ratingDescriptions: { [key: number]: string } = {
 };
 
 const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
+    console.log(email);
     const [allRatings, setAllRatings] = useState<Rating[]>([]);
     const [selectedDayRatings, setSelectedDayRatings] = useState<Rating[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedUser, setSelectedUser] = useState<Rating[] | null>(null);
     const [activeTab, setActiveTab] = useState<'all-time' | 'monthly' | 'select-day'>('all-time');
     const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+    console.log(selectedUserEmail);
     const [selectedMonth, setSelectedMonth] = useState<Date | null>(new Date());
     const [filteredRatingsForTable, setFilteredRatingsForTable] = useState<Rating[]>([]);
     const [dailySummary, setDailySummary] = useState<UserSummary[]>([]);
@@ -58,7 +60,7 @@ const ProfileRating: React.FC<ProfileRatingProps> = ({ name, email }) => {
     const [isDateChanged, setIsDateChanged] = useState(false);
     const [daylyReports, setDaylyReports] = useState<DaylyReport[]>([]); // Store the fetched daylyReports data
     const [loading, setLoading] = useState(true); // Add a loading state
-
+console.log(loading);
 
     const handleComplete = async (email: string, complete: boolean, reportDate: Date) => {
         console.log("Selected Date before handleComplete:", reportDate); // Add this line
