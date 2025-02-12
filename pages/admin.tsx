@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
+import { set } from 'react-datepicker/dist/date_utils';
 import 'react-datepicker/dist/react-datepicker.css';
 
 interface ProfileRatingProps {
@@ -170,6 +171,7 @@ console.log(loading);
     };
 
     const filterRatingsByDate = (date: Date | null) => {
+       
         if (!date) return;
         const startOfDay = new Date(date.setHours(0, 0, 0, 0));
         const endOfDay = new Date(date.setHours(23, 59, 59, 999));
@@ -186,6 +188,9 @@ console.log(loading);
     };
 
     const filterMonthlyRatings = () => {
+        setSelectedUser(null);
+        setSelectedUserEmail(null);
+        setClickedRowEmail(null);
         if (!selectedMonth) return [];
         const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
         const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -219,6 +224,9 @@ console.log(loading);
 
     useEffect(() => {
         if (selectedDate) {
+            setSelectedUser(null);
+            setSelectedUserEmail(null);
+            setClickedRowEmail(null);
             const filteredRatings = filterRatingsByDate(selectedDate);
 
             // Check if summary is already initialized for this date
@@ -257,6 +265,9 @@ console.log(loading);
 
     useEffect(() => {
         if (activeTab === 'all-time') setFilteredRatingsForTable(allRatings);
+        setSelectedUser(null);
+        setSelectedUserEmail(null);
+        setClickedRowEmail(null);
     }, [activeTab]);
 
     const handleUserClick = (email: string) => {
@@ -268,6 +279,9 @@ console.log(loading);
             userRatings = filterMonthlyRatings().filter(rating => rating.email === email)
         }
         else if (activeTab === 'select-day') {
+                 setSelectedUser(null);
+        setSelectedUserEmail(null);
+        setClickedRowEmail(null);
             userRatings = selectedDayRatings.filter((rating) => rating.email === email)
         }
         setSelectedUser(userRatings);
@@ -276,6 +290,7 @@ console.log(loading);
     };
 
     const renderTable = (ratingsData: Rating[]) => {
+        
         const aggregatedRatings = Object.entries(
             ratingsData.reduce((acc: { [key: string]: { name: string; rating: number; customerNumber: string } }, rating) => {
                 const userKey = rating.email;
@@ -298,10 +313,15 @@ console.log(loading);
                 else if (index === 3) medalEmoji = '🎖️';
                 else if (index === 4) medalEmoji = '🏅';
                 return (
+                    
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100  ${(clickedRowEmail === userEmail) ? 'bg-cyan-400 hover:bg-cyan-400 ' : ''}`}
-                        onClick={() => handleUserClick(userEmail)}
+                        
+                        className={clickedRowEmail === userEmail 
+                            ? 'bg-blue-400 hover:bg-blue-400' 
+                            : 'bg-white hover:bg-gray-100'}
+
+                                                  onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
                         <td className="px-4 py-2 border-b text-gray-800 flex items-center">
@@ -462,6 +482,7 @@ console.log(loading);
 
 
     const renderDailySummaryTable = () => {
+        
         return (
             <div className="overflow-x-auto p-4 mt-4">
                 <table className="min-w-full table-auto border-collapse table-layout-fixed">
