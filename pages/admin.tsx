@@ -300,7 +300,7 @@ console.log(loading);
                 return (
                     <tr
                         key={userEmail}
-                        className={`bg-white hover:bg-gray-100  ${(clickedRowEmail === userEmail) ? 'bg-cyan-400 hover:bg-cyan-400 ' : ''}`}
+                        className={`bg-white hover:bg-gray-100  ${(clickedRowEmail === userEmail) ? 'bg-blue-400 hover:bg-blue-400 ' : ''}`}
                         onClick={() => handleUserClick(userEmail)}
                     >
                         <td className="px-4 py-2 border-b text-gray-800">{index + 1}</td>
