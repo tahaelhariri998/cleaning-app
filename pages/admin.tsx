@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
-import { set } from 'react-datepicker/dist/date_utils';
 import 'react-datepicker/dist/react-datepicker.css';
 
 interface ProfileRatingProps {
